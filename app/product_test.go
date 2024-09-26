@@ -28,7 +28,7 @@ func TestProduct_EnableWithNegativePrice(t *testing.T) {
 	err := product.Enable()
 
 	assert.NotNil(t, err)
-	assert.Equal(t, "the price must be greater than zero", err.Error())
+	assert.Equal(t, app.ErrZeroPriceForEnable.Error(), err.Error())
 }
 
 func TestProduct_Disable(t *testing.T) {
@@ -51,7 +51,7 @@ func TestProduct_DisableWithPositivePrice(t *testing.T) {
 	err := product.Disable()
 
 	assert.NotNil(t, err)
-	assert.Equal(t, "the price must be zero", err.Error())
+	assert.Equal(t, app.ErrNonZeroPriceForDisable.Error(), err.Error())
 }
 
 func TestProduct_IsValid(t *testing.T) {
@@ -78,7 +78,7 @@ func TestProduct_IsValidWithWrongStatus(t *testing.T) {
 
 	assert.False(t, isValid)
 	assert.NotNil(t, err)
-	assert.Equal(t, "the status must be either enabled or disabled", err.Error())
+	assert.Equal(t, app.ErrInvalidStatus.Error(), err.Error())
 }
 
 func TestProduct_IsValidWithNegativePrice(t *testing.T) {
@@ -92,5 +92,5 @@ func TestProduct_IsValidWithNegativePrice(t *testing.T) {
 
 	assert.False(t, isValid)
 	assert.NotNil(t, err)
-	assert.Equal(t, "the price must be greater than or equal to zero", err.Error())
+	assert.Equal(t, app.ErrNegativePrice.Error(), err.Error())
 }

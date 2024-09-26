@@ -6,6 +6,13 @@ import (
 	"github.com/asaskevich/govalidator"
 )
 
+var (
+	ErrInvalidStatus          = errors.New("the status must be either enabled or disabled")
+	ErrNegativePrice          = errors.New("the price must be greater than or equal to zero")
+	ErrZeroPriceForEnable     = errors.New("the price must be greater than zero to enable the product")
+	ErrNonZeroPriceForDisable = errors.New("the price must be zero to disable the product")
+)
+
 func init() {
 	govalidator.SetFieldsRequiredByDefault(true)
 }
@@ -37,10 +44,10 @@ func (p *Product) IsValid() (bool, error) {
 		p.Status = DISABLED
 	}
 	if p.Status != ENABLED && p.Status != DISABLED {
-		return false, errors.New("the status must be either enabled or disabled")
+		return false, ErrInvalidStatus
 	}
 	if p.Price < 0 {
-		return false, errors.New("the price must be greater than or equal to zero")
+		return false, ErrNegativePrice
 	}
 
 	_, err := govalidator.ValidateStruct(p)
@@ -53,7 +60,7 @@ func (p *Product) IsValid() (bool, error) {
 
 func (p *Product) Enable() error {
 	if p.Price <= 0 {
-		return errors.New("the price must be greater than zero")
+		return ErrZeroPriceForEnable
 	}
 
 	p.Status = ENABLED
@@ -62,7 +69,7 @@ func (p *Product) Enable() error {
 
 func (p *Product) Disable() error {
 	if p.Price > 0 {
-		return errors.New("the price must be zero")
+		return ErrNonZeroPriceForDisable
 	}
 
 	p.Status = DISABLED
