@@ -6,6 +6,7 @@ import (
 
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
+	"github.com/mwives/hexagonal-architecture/adapters/dto"
 	"github.com/mwives/hexagonal-architecture/app"
 )
 
@@ -13,6 +14,9 @@ func MakeProductHandler(r *mux.Router, n *negroni.Negroni, service app.ProductSe
 	r.Handle("/products/{id}", n.With(
 		negroni.Wrap(getProduct(service)),
 	)).Methods("GET", "OPTIONS")
+	r.Handle("/products", n.With(
+		negroni.Wrap(createProduct(service)),
+	)).Methods("POST", "OPTIONS")
 }
 
 func getProduct(service app.ProductServiceInterface) http.Handler {
@@ -35,5 +39,35 @@ func getProduct(service app.ProductServiceInterface) http.Handler {
 			w.Write([]byte(`{"error": "internal server error"}`))
 			return
 		}
+	})
+}
+
+func createProduct(service app.ProductServiceInterface) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		var productDto dto.ProductDto
+		err := json.NewDecoder(r.Body).Decode(&productDto)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte(`{"error": "invalid request payload"}`))
+			return
+		}
+
+		product, err := service.Create(productDto.Name, productDto.Price)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(jsonError(err.Error()))
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(product)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{"error": "internal server error"}`))
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
 	})
 }
