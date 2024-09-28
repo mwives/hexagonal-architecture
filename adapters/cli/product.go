@@ -63,6 +63,9 @@ func Run(
 			"Product: ID=%s, Name=%s, Price=%f, Status=%s",
 			product.GetID(), product.GetName(), product.GetPrice(), product.GetStatus(),
 		)
+
+	default:
+		result = "Invalid action"
 	}
 
 	return result, nil
