@@ -17,6 +17,12 @@ func MakeProductHandler(r *mux.Router, n *negroni.Negroni, service app.ProductSe
 	r.Handle("/products", n.With(
 		negroni.Wrap(createProduct(service)),
 	)).Methods("POST", "OPTIONS")
+	r.Handle("/products/{id}/enable", n.With(
+		negroni.Wrap(enableProduct(service)),
+	)).Methods("POST", "OPTIONS")
+	r.Handle("/products/{id}/disable", n.With(
+		negroni.Wrap(disableProduct(service)),
+	)).Methods("POST", "OPTIONS")
 }
 
 func getProduct(service app.ProductServiceInterface) http.Handler {
@@ -69,5 +75,65 @@ func createProduct(service app.ProductServiceInterface) http.Handler {
 		}
 
 		w.WriteHeader(http.StatusCreated)
+	})
+}
+
+func enableProduct(service app.ProductServiceInterface) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		product, err := service.Get(id)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(`{"error": "product not found"}`))
+			return
+		}
+
+		product, err = service.Enable(product)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(jsonError(err.Error()))
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(product)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{"error": "internal server error"}`))
+			return
+		}
+	})
+}
+
+func disableProduct(service app.ProductServiceInterface) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		vars := mux.Vars(r)
+		id := vars["id"]
+
+		product, err := service.Get(id)
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			w.Write([]byte(`{"error": "product not found"}`))
+			return
+		}
+
+		product, err = service.Disable(product)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(jsonError(err.Error()))
+			return
+		}
+
+		err = json.NewEncoder(w).Encode(product)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{"error": "internal server error"}`))
+			return
+		}
 	})
 }
